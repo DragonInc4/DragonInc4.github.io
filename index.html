@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #4a89dc; /* Голубой цвет */
+            --primary-color: #4a89dc;
             --sidebar-bg: #2c3e50;
             --chat-bg: #34495e;
             --message-ai-bg: #3d566e;
@@ -36,7 +36,6 @@
             height: 100%;
         }
 
-        /* Стили для боковой панели */
         .sidebar {
             width: 260px;
             background-color: var(--sidebar-bg);
@@ -91,7 +90,6 @@
             background-color: rgba(74, 137, 220, 0.2);
         }
 
-        /* Основная область чата */
         .chat-container {
             flex: 1;
             display: flex;
@@ -107,16 +105,6 @@
             gap: 15px;
         }
 
-        .server-url-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            background-color: rgba(0,0,0,0.2);
-            color: var(--text-color);
-            font-size: 14px;
-        }
-
         .model-selector {
             padding: 8px 12px;
             border: 1px solid var(--primary-color);
@@ -124,6 +112,19 @@
             background-color: rgba(0,0,0,0.2);
             color: var(--text-color);
             cursor: pointer;
+        }
+
+        .web-search-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .web-search-btn.active {
+            color: var(--primary-color);
         }
 
         .chat-messages {
@@ -176,7 +177,6 @@
             flex: 1;
         }
 
-        /* Поле ввода */
         .chat-input-container {
             padding: 15px;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -233,7 +233,6 @@
             display: none;
         }
 
-        /* Изображения */
         .image-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -261,7 +260,6 @@
             border: 1px solid var(--primary-color);
         }
 
-        /* Индикатор набора */
         .typing-indicator {
             display: flex;
             gap: 5px;
@@ -281,7 +279,6 @@
             30% { transform: translateY(-5px); }
         }
 
-        /* Полоса прокрутки */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -295,7 +292,6 @@
             border-radius: 4px;
         }
 
-        /* Адаптивность */
         @media (max-width: 768px) {
             .sidebar {
                 position: absolute;
@@ -308,13 +304,9 @@
                 transform: translateX(0);
             }
 
-            .menu-toggle {
-                display: block;
-                background: none;
-                border: none;
-                color: var(--text-color);
-                font-size: 20px;
-                cursor: pointer;
+            .chat-header {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
             .message {
@@ -340,14 +332,13 @@
 
         <div class="chat-container">
             <div class="chat-header">
-                <input type="text" class="server-url-input" id="server-url-input" value="http://localhost:1337" placeholder="URL сервера">
                 <select class="model-selector" id="model-selector">
                     <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
                     <option value="gpt-4">GPT-4</option>
                     <option value="dall-e-3">DALL-E 3</option>
                 </select>
-                <button class="action-btn" id="web-search-btn" title="Поиск в интернете">
-                    <i class="fas fa-search"></i>
+                <button class="web-search-btn" id="web-search-btn">
+                    <i class="fas fa-search"></i> Поиск
                 </button>
             </div>
 
@@ -357,13 +348,7 @@
                         <i class="fas fa-robot"></i>
                     </div>
                     <div class="message-content">
-                        Привет! Я ваш AI помощник. Вы можете:
-                        <ul>
-                            <li>Изменить URL сервера в верхнем поле</li>
-                            <li>Выбрать модель для общения</li>
-                            <li>Включить поиск в интернете</li>
-                            <li>Генерировать и анализировать изображения</li>
-                        </ul>
+                        Привет! Я ваш AI помощник. Сервер: <strong id="server-url-display"></strong>
                     </div>
                 </div>
             </div>
@@ -386,7 +371,14 @@
     </div>
 
     <script>
+        // ================== КОНФИГУРАЦИЯ ==================
+        const SERVER_URL = "https://mj0j90-77-79-179-96.ru.tuna.am"; // Измените здесь адрес сервера
+        // ===================================================
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Показываем используемый URL сервера
+            document.getElementById('server-url-display').textContent = SERVER_URL;
+
             // DOM элементы
             const chatMessages = document.getElementById('chat-messages');
             const userInput = document.getElementById('user-input');
@@ -396,7 +388,6 @@
             const fileInput = document.getElementById('file-input');
             const newChatBtn = document.getElementById('new-chat-btn');
             const modelSelector = document.getElementById('model-selector');
-            const serverUrlInput = document.getElementById('server-url-input');
             const chatHistory = document.getElementById('chat-history');
 
             // Состояние
@@ -430,7 +421,7 @@
 
             function toggleWebSearch() {
                 webSearchEnabled = !webSearchEnabled;
-                webSearchBtn.style.color = webSearchEnabled ? 'var(--primary-color)' : 'var(--text-secondary)';
+                webSearchBtn.classList.toggle('active', webSearchEnabled);
             }
 
             async function sendMessage() {
@@ -438,7 +429,6 @@
                 if (!messageText || isWaitingForResponse) return;
 
                 const model = modelSelector.value;
-                const serverUrl = serverUrlInput.value.trim() || 'http://localhost:1337';
                 const isImageModel = model === 'dall-e-3';
                 
                 // Добавляем сообщение пользователя
@@ -455,7 +445,7 @@
                     let response;
                     if (isImageModel) {
                         // Генерация изображения
-                        response = await fetch(`${serverUrl}/v1/images/generate`, {
+                        response = await fetch(`${SERVER_URL}/v1/images/generate`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -474,7 +464,7 @@
                         }
                     } else {
                         // Обычный чат
-                        response = await fetch(`${serverUrl}/v1/chat/completions`, {
+                        response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -495,7 +485,7 @@
                     chatMessages.removeChild(typingIndicator);
                     isWaitingForResponse = false;
                     webSearchEnabled = false;
-                    webSearchBtn.style.color = 'var(--text-secondary)';
+                    webSearchBtn.classList.remove('active');
                 }
             }
 
@@ -503,30 +493,23 @@
                 const file = e.target.files[0];
                 if (!file) return;
 
-                const serverUrl = serverUrlInput.value.trim() || 'http://localhost:1337';
                 const reader = new FileReader();
                 reader.onload = async function(event) {
                     const imageUrl = event.target.result;
                     addMessage('user', 'Загруженное изображение:', false, [imageUrl]);
 
                     try {
-                        const formData = new FormData();
-                        formData.append('image', file);
-                        
-                        const response = await fetch(`${serverUrl}/v1/chat/completions`, {
+                        const response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
                             method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 messages: [{
                                     role: 'user',
                                     content: 'Анализ изображения',
                                     image: imageUrl
                                 }]
-                            }),
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
+                            })
                         });
-                        
                         const data = await response.json();
                         addMessage('assistant', data.choices[0].message.content);
                     } catch (error) {
@@ -588,12 +571,12 @@
                             <i class="fas fa-robot"></i>
                         </div>
                         <div class="message-content">
-                            Новый чат начат. URL сервера: ${serverUrlInput.value || 'http://localhost:1337'}
+                            Новый чат начат. Сервер: ${SERVER_URL}
                         </div>
                     </div>
                 `;
                 webSearchEnabled = false;
-                webSearchBtn.style.color = 'var(--text-secondary)';
+                webSearchBtn.classList.remove('active');
             }
 
             function loadChatHistory() {
