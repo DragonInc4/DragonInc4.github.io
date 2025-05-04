@@ -372,7 +372,7 @@
 
     <script>
         // ================== КОНФИГУРАЦИЯ ==================
-        const SERVER_URL = "https://mj0j90-77-79-179-96.ru.tuna.am"; // Измените здесь адрес сервера
+        const SERVER_URL = "https://qmec69kg193y.share.zrok.io"; // Измените здесь адрес сервера
         // ===================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -447,7 +447,10 @@
                         // Генерация изображения
                         response = await fetch(`${SERVER_URL}/v1/images/generate`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'skip_zrok_interstitial': 'true'
+                            },
                             body: JSON.stringify({
                                 prompt: messageText,
                                 model: "dall-e-3",
@@ -466,7 +469,10 @@
                         // Обычный чат
                         response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'skip_zrok_interstitial': 'true'
+                            },
                             body: JSON.stringify({
                                 messages: [{
                                     role: 'user',
@@ -501,7 +507,10 @@
                     try {
                         const response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'skip_zrok_interstitial': 'true'
+                            },
                             body: JSON.stringify({
                                 messages: [{
                                     role: 'user',
