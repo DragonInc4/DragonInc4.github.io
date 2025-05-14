@@ -1,626 +1,544 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat (Local)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>G4F Chat</title>
     <style>
         :root {
-            --primary-color: #4a89dc;
-            --sidebar-bg: #2c3e50;
-            --chat-bg: #34495e;
-            --message-ai-bg: #3d566e;
-            --message-user-bg: #2c3e50;
-            --text-color: #ecf0f1;
-            --text-secondary: #bdc3c7;
+            --primary-color: #10a37f;
+            --primary-dark: #0d8a6d;
+            --bg-color: #343541;
+            --message-bg-user: #444654;
+            --message-bg-bot: #343541;
+            --text-color: #d1d5db;
+            --border-color: #555;
         }
-
-        * {
+        
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--chat-bg);
+            background-color: var(--bg-color);
             color: var(--text-color);
-            height: 100vh;
-            display: flex;
-        }
-
-        .app-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
-
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            border-right: 1px solid rgba(255,255,255,0.1);
+            height: 100vh;
         }
-
-        .sidebar-header {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .new-chat-btn {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            background-color: transparent;
-            color: var(--text-color);
-            cursor: pointer;
+        
+        header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
         }
-
-        .new-chat-btn:hover {
-            background-color: rgba(74, 137, 220, 0.2);
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
         }
-
-        .chat-history {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        .chat-history-item {
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: background-color 0.2s;
-        }
-
-        .chat-history-item:hover {
-            background-color: rgba(74, 137, 220, 0.2);
-        }
-
+        
         .chat-container {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .chat-header {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .model-selector {
-            padding: 8px 12px;
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            background-color: rgba(0,0,0,0.2);
-            color: var(--text-color);
-            cursor: pointer;
-        }
-
-        .web-search-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
-
-        .web-search-btn.active {
-            color: var(--primary-color);
-        }
-
-        .chat-messages {
-            flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 20px;
         }
-
+        
         .message {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
             max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 8px;
             line-height: 1.5;
-            animation: fadeIn 0.3s ease-out;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        
         .user-message {
             align-self: flex-end;
-            background-color: var(--message-user-bg);
-            border: 1px solid var(--primary-color);
+            background-color: var(--message-bg-user);
+            border: 1px solid var(--border-color);
         }
-
-        .ai-message {
+        
+        .bot-message {
             align-self: flex-start;
-            background-color: var(--message-ai-bg);
-            display: flex;
-            gap: 15px;
+            background-color: var(--message-bg-bot);
+            border: 1px solid var(--border-color);
         }
-
-        .message-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
+        
+        .input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
         }
-
-        .message-content {
+        
+        #message-input {
             flex: 1;
-        }
-
-        .chat-input-container {
-            padding: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .chat-input-box {
-            display: flex;
-            gap: 10px;
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px 50px 12px 15px;
-            border: 1px solid var(--primary-color);
+            padding: 0.75rem;
             border-radius: 5px;
-            background-color: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            background-color: var(--message-bg-user);
             color: var(--text-color);
-            resize: none;
-            height: 60px;
-            transition: all 0.2s;
-        }
-
-        .chat-input:focus {
+            font-size: 1rem;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.3);
         }
-
-        .input-actions {
-            position: absolute;
-            right: 15px;
-            bottom: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            background: none;
+        
+        #send-button {
+            margin-left: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            color: var(--primary-color);
-            transform: scale(1.1);
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .image-grid img {
-            width: 100%;
             border-radius: 5px;
             cursor: pointer;
-            transition: transform 0.2s;
-            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 1rem;
+            transition: background-color 0.2s;
         }
-
-        .image-grid img:hover {
-            transform: scale(1.02);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        
+        #send-button:hover {
+            background-color: var(--primary-dark);
         }
-
-        .uploaded-image {
-            max-width: 100%;
-            border-radius: 5px;
-            margin-top: 10px;
-            border: 1px solid var(--primary-color);
+        
+        #send-button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
         }
-
+        
         .typing-indicator {
             display: flex;
-            gap: 5px;
-            padding: 10px;
+            align-items: center;
+            padding: 0.5rem;
         }
-
+        
         .typing-dot {
             width: 8px;
             height: 8px;
-            background-color: var(--primary-color);
+            background-color: var(--text-color);
             border-radius: 50%;
+            margin: 0 2px;
             animation: typingAnimation 1.4s infinite ease-in-out;
         }
-
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
         @keyframes typingAnimation {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
         }
-
-        ::-webkit-scrollbar {
-            width: 8px;
+        
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background-color: var(--bg-color);
+            border-left: 1px solid var(--border-color);
+            padding: 1rem;
+            transition: right 0.3s;
+            z-index: 100;
+            overflow-y: auto;
         }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        
+        .settings-panel.open {
+            right: 0;
         }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
+        
+        .settings-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .settings-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .settings-section h3 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        select, input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: var(--message-bg-user);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
             border-radius: 4px;
         }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                position: absolute;
-                z-index: 10;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .chat-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .message {
-                max-width: 90%;
-            }
-
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .model-tag {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <button class="new-chat-btn" id="new-chat-btn">
-                    <i class="fas fa-plus"></i> Новый чат
-                </button>
-            </div>
-            <div class="chat-history" id="chat-history"></div>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-header">
-                <select class="model-selector" id="model-selector">
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="dall-e-3">DALL-E 3</option>
-                </select>
-                <button class="web-search-btn" id="web-search-btn">
-                    <i class="fas fa-search"></i> Поиск
-                </button>
-            </div>
-
-            <div class="chat-messages" id="chat-messages">
-                <div class="message ai-message">
-                    <div class="message-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="message-content">
-                        Привет! Я ваш AI помощник. Сервер: <strong id="server-url-display"></strong>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chat-input-container">
-                <div class="chat-input-box">
-                    <textarea class="chat-input" id="user-input" placeholder="Введите сообщение..." rows="1"></textarea>
-                    <div class="input-actions">
-                        <button class="action-btn" id="attach-btn" title="Прикрепить изображение">
-                            <i class="fas fa-image"></i>
-                        </button>
-                        <button class="action-btn" id="send-btn" title="Отправить">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                    <input type="file" id="file-input" class="file-input" accept="image/*">
-                </div>
-            </div>
-        </div>
+    <header>
+        <div class="logo">G4F Chat</div>
+        <button class="settings-button" id="settings-button">⚙️</button>
+    </header>
+    
+    <div class="chat-container" id="chat-container">
+        <!-- Messages will appear here -->
     </div>
-
+    
+    <div class="input-container">
+        <input type="text" id="message-input" placeholder="Type your message here..." autocomplete="off">
+        <button id="send-button">Send</button>
+    </div>
+    
+    <div class="settings-panel" id="settings-panel">
+        <h2>Settings</h2>
+        
+        <div class="settings-section">
+            <h3>API Configuration</h3>
+            <label for="api-url">API URL</label>
+            <input type="text" id="api-url" value="https://konnorai.serveo.net/v1">
+            
+            <label for="api-key">API Key (if required)</label>
+            <input type="text" id="api-key" value="secret">
+        </div>
+        
+        <div class="settings-section">
+            <h3>Model Selection</h3>
+            <label for="model-select">Model</label>
+            <select id="model-select">
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="claude-2">Claude 2</option>
+                <option value="claude-3-opus">Claude 3 Opus</option>
+            </select>
+            
+            <label for="stream-toggle">Stream Responses</label>
+            <select id="stream-toggle">
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+            </select>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Appearance</h3>
+            <label for="theme-select">Theme</label>
+            <select id="theme-select">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="system">System Default</option>
+            </select>
+        </div>
+        
+        <button id="save-settings" style="width: 100%; padding: 0.75rem; background-color: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Save Settings</button>
+    </div>
+    
     <script>
-        // ================== КОНФИГУРАЦИЯ ==================
-        const SERVER_URL = "https://qmec69kg193y.share.zrok.io"; // Измените здесь адрес сервера
-        // ===================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Показываем используемый URL сервера
-            document.getElementById('server-url-display').textContent = SERVER_URL;
-
-            // DOM элементы
-            const chatMessages = document.getElementById('chat-messages');
-            const userInput = document.getElementById('user-input');
-            const sendBtn = document.getElementById('send-btn');
-            const attachBtn = document.getElementById('attach-btn');
-            const webSearchBtn = document.getElementById('web-search-btn');
-            const fileInput = document.getElementById('file-input');
-            const newChatBtn = document.getElementById('new-chat-btn');
-            const modelSelector = document.getElementById('model-selector');
-            const chatHistory = document.getElementById('chat-history');
-
-            // Состояние
-            let currentChatId = Date.now().toString();
-            let chats = JSON.parse(localStorage.getItem('chats')) || {};
-            let isWaitingForResponse = false;
-            let webSearchEnabled = false;
-
-            // Инициализация
-            loadChatHistory();
-
-            // Обработчики событий
-            sendBtn.addEventListener('click', sendMessage);
-            userInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-            userInput.addEventListener('input', adjustInputHeight);
-            attachBtn.addEventListener('click', () => fileInput.click());
-            webSearchBtn.addEventListener('click', toggleWebSearch);
-            fileInput.addEventListener('change', handleFileUpload);
-            newChatBtn.addEventListener('click', startNewChat);
-
-            // Функции
-            function adjustInputHeight() {
-                userInput.style.height = 'auto';
-                userInput.style.height = userInput.scrollHeight + 'px';
-            }
-
-            function toggleWebSearch() {
-                webSearchEnabled = !webSearchEnabled;
-                webSearchBtn.classList.toggle('active', webSearchEnabled);
-            }
-
-            async function sendMessage() {
-                const messageText = userInput.value.trim();
-                if (!messageText || isWaitingForResponse) return;
-
-                const model = modelSelector.value;
-                const isImageModel = model === 'dall-e-3';
-                
-                // Добавляем сообщение пользователя
-                addMessage('user', messageText, isImageModel);
-                userInput.value = '';
-                adjustInputHeight();
-
-                // Индикатор набора
-                const typingIndicator = createTypingIndicator();
-                chatMessages.appendChild(typingIndicator);
-                isWaitingForResponse = true;
-
-                try {
-                    let response;
-                    if (isImageModel) {
-                        // Генерация изображения
-                        response = await fetch(`${SERVER_URL}/v1/images/generate`, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'skip_zrok_interstitial': 'true'
-                            },
-                            body: JSON.stringify({
-                                prompt: messageText,
-                                model: "dall-e-3",
-                                response_format: "url"
-                            })
-                        });
-                        const data = await response.json();
-                        
-                        if (data.data && data.data.length > 0) {
-                            const imageUrls = data.data.map(item => item.url);
-                            addMessage('assistant', messageText, true, imageUrls);
-                        } else {
-                            throw new Error('Не получилось сгенерировать изображение');
-                        }
-                    } else {
-                        // Обычный чат
-                        response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'skip_zrok_interstitial': 'true'
-                            },
-                            body: JSON.stringify({
-                                messages: [{
-                                    role: 'user',
-                                    content: messageText
-                                }],
-                                model: model,
-                                web_search: webSearchEnabled
-                            })
-                        });
-                        const data = await response.json();
-                        addMessage('assistant', data.choices[0].message.content);
-                    }
-                } catch (error) {
-                    addMessage('assistant', `Ошибка: ${error.message}`);
-                } finally {
-                    chatMessages.removeChild(typingIndicator);
-                    isWaitingForResponse = false;
-                    webSearchEnabled = false;
-                    webSearchBtn.classList.remove('active');
-                }
-            }
-
-            async function handleFileUpload(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = async function(event) {
-                    const imageUrl = event.target.result;
-                    addMessage('user', 'Загруженное изображение:', false, [imageUrl]);
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/v1/chat/completions`, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'skip_zrok_interstitial': 'true'
-                            },
-                            body: JSON.stringify({
-                                messages: [{
-                                    role: 'user',
-                                    content: 'Анализ изображения',
-                                    image: imageUrl
-                                }]
-                            })
-                        });
-                        const data = await response.json();
-                        addMessage('assistant', data.choices[0].message.content);
-                    } catch (error) {
-                        addMessage('assistant', `Ошибка анализа: ${error.message}`);
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-
-            function addMessage(role, content, isImagePrompt = false, images = []) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${role}-message`;
-                
-                const avatar = role === 'assistant' ? 
-                    '<div class="message-avatar"><i class="fas fa-robot"></i></div>' : '';
-                
-                let contentHtml = '';
-                if (isImagePrompt && images.length > 0) {
-                    contentHtml = `
-                        <div class="message-content">
-                            ${content ? `<p>${content}</p>` : ''}
-                            <div class="image-grid">
-                                ${images.map(img => `<img src="${img}" class="uploaded-image">`).join('')}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    contentHtml = `
-                        <div class="message-content">${content}</div>
-                    `;
-                }
-                
-                messageDiv.innerHTML = avatar + contentHtml;
-                chatMessages.appendChild(messageDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            function createTypingIndicator() {
-                const div = document.createElement('div');
-                div.className = 'message ai-message';
-                div.innerHTML = `
-                    <div class="message-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="typing-indicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                `;
-                return div;
-            }
-
-            function startNewChat() {
-                currentChatId = Date.now().toString();
-                chatMessages.innerHTML = `
-                    <div class="message ai-message">
-                        <div class="message-avatar">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="message-content">
-                            Новый чат начат. Сервер: ${SERVER_URL}
-                        </div>
-                    </div>
-                `;
-                webSearchEnabled = false;
-                webSearchBtn.classList.remove('active');
-            }
-
-            function loadChatHistory() {
-                chats = JSON.parse(localStorage.getItem('chats')) || {};
-                updateChatHistoryUI();
-            }
-
-            function updateChatHistoryUI() {
-                chatHistory.innerHTML = '';
-                const sortedChats = Object.values(chats).sort((a, b) => b.timestamp - a.timestamp);
-                
-                sortedChats.forEach(chat => {
-                    const chatItem = document.createElement('div');
-                    chatItem.className = 'chat-history-item';
-                    chatItem.textContent = chat.title;
-                    chatItem.addEventListener('click', () => loadChat(chat.id));
-                    chatHistory.appendChild(chatItem);
-                });
-            }
-
-            function loadChat(chatId) {
-                currentChatId = chatId;
-                const chat = chats[chatId];
-                chatMessages.innerHTML = '';
-                
-                chat.messages.forEach(msg => {
-                    addMessage(
-                        msg.role, 
-                        msg.content, 
-                        msg.isImagePrompt,
-                        msg.images || []
-                    );
-                });
+        // DOM elements
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const saveSettingsButton = document.getElementById('save-settings');
+        
+        // Settings elements
+        const apiUrlInput = document.getElementById('api-url');
+        const apiKeyInput = document.getElementById('api-key');
+        const modelSelect = document.getElementById('model-select');
+        const streamToggle = document.getElementById('stream-toggle');
+        const themeSelect = document.getElementById('theme-select');
+        
+        // State
+        let isWaitingForResponse = false;
+        let conversationHistory = [];
+        
+        // Initialize
+        loadSettings();
+        applyTheme();
+        
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
         });
+        
+        settingsButton.addEventListener('click', toggleSettings);
+        saveSettingsButton.addEventListener('click', saveSettings);
+        
+        // Functions
+        function toggleSettings() {
+            settingsPanel.classList.toggle('open');
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('g4f-chat-settings')) || {};
+            
+            apiUrlInput.value = settings.apiUrl || 'http://localhost:1337/v1';
+            apiKeyInput.value = settings.apiKey || 'secret';
+            modelSelect.value = settings.model || 'gpt-4o-mini';
+            streamToggle.value = settings.stream !== undefined ? settings.stream : 'true';
+            themeSelect.value = settings.theme || 'dark';
+        }
+        
+        function saveSettings() {
+            const settings = {
+                apiUrl: apiUrlInput.value,
+                apiKey: apiKeyInput.value,
+                model: modelSelect.value,
+                stream: streamToggle.value === 'true',
+                theme: themeSelect.value
+            };
+            
+            localStorage.setItem('g4f-chat-settings', JSON.stringify(settings));
+            applyTheme();
+            toggleSettings();
+        }
+        
+        function applyTheme() {
+            const settings = JSON.parse(localStorage.getItem('g4f-chat-settings')) || {};
+            const theme = settings.theme || 'dark';
+            
+            if (theme === 'light') {
+                document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                document.documentElement.style.setProperty('--message-bg-user', '#f7f7f8');
+                document.documentElement.style.setProperty('--message-bg-bot', '#ffffff');
+                document.documentElement.style.setProperty('--text-color', '#374151');
+                document.documentElement.style.setProperty('--border-color', '#d9d9e3');
+            } else if (theme === 'dark') {
+                document.documentElement.style.setProperty('--bg-color', '#343541');
+                document.documentElement.style.setProperty('--message-bg-user', '#444654');
+                document.documentElement.style.setProperty('--message-bg-bot', '#343541');
+                document.documentElement.style.setProperty('--text-color', '#d1d5db');
+                document.documentElement.style.setProperty('--border-color', '#555');
+            }
+            // For 'system', we rely on the default dark theme set in CSS
+        }
+        
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(role + '-message');
+            
+            if (content instanceof Array) {
+                // Handle streaming content (array of tokens)
+                const contentContainer = document.createElement('div');
+                messageDiv.appendChild(contentContainer);
+                
+                content.forEach(token => {
+                    contentContainer.textContent += token;
+                });
+                
+                chatContainer.appendChild(messageDiv);
+            } else {
+                // Handle regular content
+                messageDiv.textContent = content;
+                chatContainer.appendChild(messageDiv);
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+        
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'bot-message', 'typing-indicator');
+            typingDiv.id = 'typing-indicator';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('typing-dot');
+                typingDiv.appendChild(dot);
+            }
+            
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return typingDiv;
+        }
+        
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isWaitingForResponse) return;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            
+            // Add to conversation history
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+            
+            // Clear input
+            messageInput.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Disable input while waiting for response
+            isWaitingForResponse = true;
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            
+            try {
+                const settings = JSON.parse(localStorage.getItem('g4f-chat-settings')) || {};
+                const stream = settings.stream !== undefined ? settings.stream : true;
+                
+                if (stream) {
+                    await streamResponse();
+                } else {
+                    await getCompleteResponse();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('bot', `Sorry, I encountered an error: ${error.message}`);
+            } finally {
+                // Re-enable input
+                isWaitingForResponse = false;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+                removeTypingIndicator();
+            }
+        }
+        
+        async function streamResponse() {
+            const settings = JSON.parse(localStorage.getItem('g4f-chat-settings')) || {};
+            
+            const response = await fetch(settings.apiUrl + '/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${settings.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: settings.model || 'gpt-4o-mini',
+                    messages: conversationHistory,
+                    stream: true
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let botMessage = '';
+            let messageDiv = null;
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data:') && !line.includes('[DONE]')) {
+                        try {
+                            const data = JSON.parse(line.substring(5));
+                            const token = data.choices[0]?.delta?.content;
+                            
+                            if (token) {
+                                botMessage += token;
+                                
+                                if (!messageDiv) {
+                                    removeTypingIndicator();
+                                    messageDiv = addMessage('bot', [token]);
+                                } else {
+                                    const contentDiv = messageDiv.querySelector('div');
+                                    contentDiv.textContent = botMessage;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing stream data:', e);
+                        }
+                    }
+                }
+            }
+            
+            // Add bot message to conversation history
+            if (botMessage) {
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: botMessage
+                });
+            }
+        }
+        
+        async function getCompleteResponse() {
+            const settings = JSON.parse(localStorage.getItem('g4f-chat-settings')) || {};
+            
+            const response = await fetch(settings.apiUrl + '/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${settings.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: settings.model || 'gpt-4o-mini',
+                    messages: conversationHistory,
+                    stream: false
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const botMessage = data.choices[0]?.message?.content;
+            
+            if (botMessage) {
+                removeTypingIndicator();
+                addMessage('bot', botMessage);
+                
+                // Add bot message to conversation history
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: botMessage
+                });
+            }
+        }
     </script>
 </body>
 </html>
